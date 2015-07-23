@@ -165,7 +165,7 @@ Meteor.call(&quot;addTask&quot;, text);</code></pre>
 <figure>
 <img src="https://s3.amazonaws.com/media-p.slid.es/uploads/48587/images/1561797/optimistic-ui.png" alt="" />
 </figure>
-<p>Component-level Subscription <!-- 使用组件级的发布订阅模式 --></p>
+<p>Component-level Subscription <!-- 使用组件级的发布订阅模式 --> <img src="https://s3.amazonaws.com/media-p.slid.es/uploads/48587/images/1561814/pubsub.png" alt="" /></p>
 <pre><code>Template.notifications.onCreated(function () {
   // Use this.subscribe inside onCreated callback
   this.subscribe(&quot;notifications&quot;)
@@ -187,22 +187,26 @@ Meteor.call(&quot;addTask&quot;, text);</code></pre>
 <p>可以兼容其他前端框架</p>
 <p>React Angular</p>
 <p><code>meteor add urigo:angular</code></p>
-<p><code>meteor add urigo:angular</code></p>
+<p><code>meteor add react</code></p>
 </section>
 <section class="slide level2">
 
+<!-- 这里只放angular的例子 -->
 <pre><code>&lt;ul ng-repeat=&quot;task in tasks&quot;&gt;
   &lt;li&gt;{{task.text}}&lt;/li&gt;
 &lt;/ul&gt;
 
-angular.module(&quot;simple-todos&quot;, [&#39;angular-meteor&#39;]);
+Tasks = new Mongo.Collection(&quot;tasks&quot;);
 
-angular.module(&quot;simple-todos&quot;)
-  .controller(&quot;TodosListCtrl&quot;, [&#39;$scope&#39;,
-    function($scope){
-      $scope.tasks = [...];
-    }
-  ]);</code></pre>
+if (Meteor.isClient) {
+  angular.module(&quot;simple-todos&quot;, [&#39;angular-meteor&#39;]);
+  angular.module(&quot;simple-todos&quot;)
+    .controller(&quot;TodosListCtrl&quot;, [&#39;$scope&#39;, &#39;$meteor&#39;,
+      function($scope, $meteor){
+        $scope.tasks = $meteor.collection(Tasks);
+      }
+    ]);
+}</code></pre>
 </section>
 <section id="七牛前端测试实践" class="slide level2">
 <h1>七牛前端测试实践</h1>
@@ -226,6 +230,10 @@ angular.module(&quot;simple-todos&quot;)
 
 <ul>
 <li>测试基础函数，但是对DOM有依赖的不好测试</li>
+</ul>
+<!-- 在实际开发中要尽量避免逻辑和 DOM 的耦合，分离之后才能更加方便地去验证业务逻辑。
+所以用MVC框架，比如angular ，关注度分离，让 DOM 和业务逻辑解耦。 -->
+<ul>
 <li>使用angular之后隔离DOM，对测试友好，集中测试数据逻辑部分</li>
 </ul>
 </section>
