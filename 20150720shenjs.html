@@ -108,9 +108,10 @@ light.set(&#39;red&#39;);
 这个
  -->
 <figure>
-<img src="https://s3.amazonaws.com/media-p.slid.es/uploads/48587/images/1561797/optimistic-ui.png" alt="" />
+<img src="images/optimistic-ui.png" alt="" />
 </figure>
-<p>Isomorphic Database Driver</p>
+<p>Isomorphic Database Driver <!-- 一种同构映射数据库驱动，同步client data state & server data state
+ --></p>
 </section>
 <section class="slide level2">
 
@@ -163,9 +164,12 @@ Meteor.call(&quot;addTask&quot;, text);</code></pre>
 
 <p>Optimistic UI updates</p>
 <figure>
-<img src="https://s3.amazonaws.com/media-p.slid.es/uploads/48587/images/1561797/optimistic-ui.png" alt="" />
+<img src="images/optimistic-ui.png" alt="" />
 </figure>
-<p>Component-level Subscription <!-- 使用组件级的发布订阅模式 --> <img src="https://s3.amazonaws.com/media-p.slid.es/uploads/48587/images/1561814/pubsub.png" alt="" /></p>
+</section>
+<section class="slide level2">
+
+<p>Component-level Subscription <!-- 使用组件级的发布订阅模式 --> <img src="images/pubsub.png" alt="" /></p>
 <pre><code>Template.notifications.onCreated(function () {
   // Use this.subscribe inside onCreated callback
   this.subscribe(&quot;notifications&quot;)
@@ -223,19 +227,17 @@ if (Meteor.isClient) {
 
 <h3 id="早期尝试">早期尝试</h3>
 <ul>
-<li>模拟浏览器操作自动化 <img src="http://blog.qiniu.com/wp-content/uploads/2015/07/110.png" alt="" /></li>
+<li>模拟浏览器操作自动化 <img src="images/110.png" alt="" /></li>
 </ul>
 </section>
 <section class="slide level2">
 
 <ul>
 <li>测试基础函数，但是对DOM有依赖的不好测试</li>
+<li>使用angular之后隔离DOM，对测试友好，集中测试数据逻辑部分</li>
 </ul>
 <!-- 在实际开发中要尽量避免逻辑和 DOM 的耦合，分离之后才能更加方便地去验证业务逻辑。
 所以用MVC框架，比如angular ，关注度分离，让 DOM 和业务逻辑解耦。 -->
-<ul>
-<li>使用angular之后隔离DOM，对测试友好，集中测试数据逻辑部分</li>
-</ul>
 </section>
 <section class="slide level2">
 
@@ -261,7 +263,7 @@ Controller的测试，主要测一些外围的函数和变量的状态 -->
 
 <p>Stub 适合处理仅关注返回值的依赖</p>
 <p>Angular.mock 关注依赖的行为验证，如无返回的依赖，</p>
-<p>mock，在测试领域，通常伪造被调用方来测试上层代码的健壮性，比如伪造网络异常，权限异常，文件系统异常</p>
+<!-- mock，在测试领域，通常伪造被调用方来测试上层代码的健壮性，比如伪造网络异常，权限异常，文件系统异常 -->
 <!-- Mock除了关注外部依赖的返回值外，还关注外部调用的值。因此，在存／写一些状态的时候，没有返回值就不知道存／写是否成功，只能测试是否调用到了外部依赖的某个方法，传进去的参数是否是预期的。使用Mock的方式，最开始调用时要验证某个Mock对象的某个行为，最后再由Mock对象去验证它的行为是否正确。
 
 Mock Data处理的小问题，硬编码了Mock数据，难以维护
@@ -271,62 +273,105 @@ Mock Data处理的小问题，硬编码了Mock数据，难以维护
 <section class="slide level2">
 
 <h3 id="目前用到的工具karmaphantomjs">目前用到的工具：Karma＋PhantomJS</h3>
-<p>测试工具主要使用Karma，而脚本运行的浏览器环境选择PhantomJS <!-- 可以直接在命令行里看到结果，不会每次运行测试时弹出界面。 --></p>
-<p>测试框架官方推荐Jasmine（包括Stub、Spy的功能）</p>
+<ul>
+<li>测试工具主要使用Karma，而脚本运行的浏览器环境选择PhantomJS</li>
+</ul>
+<!-- 可以直接在命令行里看到结果，不会每次运行测试时弹出界面。 -->
+<ul>
+<li>测试框架官方推荐Jasmine（包括Stub、Spy的功能）</li>
+</ul>
 </section>
 <section class="slide level2">
 
 <h3 id="前端测试带来的益处">前端测试带来的益处</h3>
-<p>写测试会考虑业务逻辑的边际条件是什么，这样就能提前找到开发时不太容易找到的Bug。</p>
-<p>重构代码更为轻松</p>
-<p>写业务代码的时候，理解会更深刻。帮助你找到更合理的代码结构。</p>
+<ul>
+<li>写测试会考虑更多</li>
+</ul>
+<!-- 业务逻辑的边际条件是什么，这样就能提前找到开发时不太容易找到的Bug。 -->
+<!-- 这里讲下我自己的感受，使用BDD行为驱动开发，
+它通过用自然语言书写非程序员可读的测试用例扩展了测试驱动开发方法
+然后你写完一个feature测试代码，看着那些测试用例一个个从红色变成绿色是非常爽的事情
+ -->
+<ul>
+<li><p>重构代码更为轻松</p></li>
+<li><p>写业务代码的时候，理解会更深刻。</p></li>
+</ul>
+<!-- 帮助你找到更合理的代码结构。 -->
 </section>
 <section class="slide level2">
 
 <h3 id="关于前端测试的建议">关于前端测试的建议</h3>
 <p>有选择性的写测试。</p>
-<p>首先，测试比较重要的部分 <!-- 评估出错的风险。比如数据统计、计费等和用户密切相关的内容。 --></p>
-<p>其次，是测试比较稳定的部分 <!-- 即跟业务不相关的部分函数。估出错的风险 --></p>
-<p>再次，是测试依赖比较少的部分 <!-- ，这里只需要关注它整个逻辑本身。 --></p>
+<ul>
+<li>首先，测试比较重要的部分</li>
+</ul>
+<!-- 评估出错的风险。比如数据统计、计费等和用户密切相关的内容。 -->
+<ul>
+<li>其次，是测试比较稳定的部分</li>
+</ul>
+<!-- 即跟业务不相关的部分函数。估出错的风险 -->
+<ul>
+<li>再次，是测试依赖比较少的部分</li>
+</ul>
+<!-- ，这里只需要关注它整个逻辑本身。 -->
 <p>对于大型软件项目，合适的测试方案能够大大减少今后的维护成本，从长远来看，写测试所花的时间是非常值得的。</p>
 </section>
-<section id="调优利器node-profiler-朴灵" class="slide level2">
-<h1>调优利器：node profiler, 朴灵</h1>
+<section id="调优利器node-profiler" class="slide level2">
+<h1>调优利器：node profiler</h1>
+<p>朴灵</p>
+</section>
+<section class="slide level2">
+
 <h3 id="什么是node-profiler">什么是Node Profiler</h3>
 <ul>
 <li>来自阿里云的alinode团队的性能调优工具</li>
 <li>基于Node进行开发，hack了部分V8代码</li>
 <li>完全兼容Node，集成改进的inspector工具</li>
 </ul>
+</section>
+<section class="slide level2">
+
 <p>常见调优工具的问题</p>
-<p>很容易知道哪些代码慢，但较少知道原因。</p>
-<p>Node Profiler的目标是不仅要知道哪些代码，还要知 道为什么，以及更多。</p>
-<h3 id="node-profiler的工作原理">Node Profiler的工作原理</h3>
-<p>V8是一个JavaScript语言的执⾏行引擎</p>
 <ul>
-<li>V8是JIT的方式执行JavaScript代码，即：将JavaScript直接编译为机器码，然后执⾏行</li>
-<li>V8对JavaScript的处理是以函数为单位进⾏行的，也就是说一个函数的某段代码造成无法优化，会导致整个函数处于未优化的状态。所以即使某些Bailout情况无法避开，但可以确保它们处于一个极小的函数中，以避免整个函数无法优化。</li>
+<li><p>很容易知道哪些代码慢，但较少知道原因。</p></li>
+<li><p>Node Profiler的目标是不仅要知道哪些代码，还要知 道为什么，以及更多。</p></li>
 </ul>
 </section>
 <section class="slide level2">
 
+<h3 id="node-profiler的工作原理">Node Profiler的工作原理</h3>
+<p>V8是一个JavaScript语言的执行引擎</p>
+</section>
+<section class="slide level2">
+
+<ul>
+<li>V8是JIT的方式执行JavaScript代码</li>
+</ul>
+<!-- 即：将JavaScript直接编译为机器码，然后执行 -->
+<ul>
+<li>V8对JavaScript的处理是以函数为单位进行的 <!-- ，也就是说一个函数的某段代码造成无法优化，会导致整个函数处于未优化的状态。所以即使某些Bailout情况无法避开，但可以确保它们处于一个极小的函数中，以避免整个函数无法优化。 --></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<!-- 接下来举例子说明有哪些不能被优化的函数，然后这里就可以保证他们处在一个绩效的函数 -->
 <p>带有try/catch语句的函数无法被V8优化。</p>
 <p>带有try/finally语句的函数无法被V8优化。</p>
 <p>带有with语句的函数无法被V8优化。</p>
 <p>无法复用隐藏类</p>
-<p>Fast Property Access (快速的属性访问)</p>
-<p>为了减少访问JS属性的时间，V8没有采用动态查询的方式，V8会在背后动态的创建隐藏类，在V8中，当对象的属性改变时，对象会更改隐藏类的指向。</p>
+<!-- Fast Property Access (快速的属性访问) -->
+<!-- 为了减少访问JS属性的时间，V8没有采用动态查询的方式，V8会在背后动态的创建隐藏类，在V8中，当对象的属性改变时，对象会更改隐藏类的指向。 -->
 </section>
 <section class="slide level2">
 
-<p>一个普通编译器：FullCompiler</p>
 <ul>
+<li>一个普通编译器：FullCompiler</li>
 <li>一个优化编译器：Optimizing Compiler</li>
-<li><p>运⾏行时优化</p></li>
-<li>DONT_OPTIMIZE_NODE</li>
-<li>Bailout</li>
-<li><p>deoptimization(逆优化)</p></li>
+<li>运行时优化</li>
 </ul>
+<!-- + DONT_OPTIMIZE_NODE
++ Bailout
++ deoptimization(逆优化) -->
 </section>
 <section class="slide level2">
 
@@ -334,11 +379,11 @@ Mock Data处理的小问题，硬编码了Mock数据，难以维护
 <ul>
 <li>了解更多函数状态</li>
 <li>给出更多优化建议</li>
-<li>更好的⽤用户体验</li>
+<li>更好的用户体验</li>
 </ul>
 <h3 id="怎么使用node-profiler">怎么使用Node Profiler</h3>
 <pre><code>install node-profiler from http://alinode.aliyun.com/
-node-profiler example.js # 运⾏行起来
+node-profiler example.js # 运行起来
 wrk http://localhost:1334/ # 让代码燃
 start profiling/stop profiling # 采样
 analyse profiling result # 分析结果</code></pre>
@@ -405,8 +450,13 @@ analyse profiling result # 分析结果</code></pre>
 
 <p>toa <!-- 这个是作者及其团队自个写的框架， 异步基础基于thunks，后面会讲到--></p>
 <p>没有级联怎么办？</p>
-<p>后处理：context.onPreEnd</p>
-<p>终止业务流程：context.end</p>
+<ul>
+<li><p>后处理：context.onPreEnd</p></li>
+<li><p>终止业务流程：context.end</p></li>
+</ul>
+</section>
+<section class="slide level2">
+
 <h3 id="异步基础">异步基础</h3>
 <h4 id="promise">promise</h4>
 <ul>
@@ -421,7 +471,10 @@ analyse profiling result # 分析结果</code></pre>
 <section class="slide level2">
 
 <h4 id="thunk">thunk</h4>
-<p>thunk是高阶函数的一种--将函数作为输入或者返回值的函数，是callback的特别形式</p>
+<ul>
+<li>thunk是高阶函数的一种</li>
+</ul>
+<!-- 将函数作为输入或者返回值的函数，是callback的特别形式 -->
 <p>thunk是一个封装了特定任务（函数）的函数，运行该函数时任务才开始执行（惰性求值）</p>
 <pre><code>function + promise + co = thunks
 thunk(cb)(cb)(cb)(cb)(cb)(cb) /* thunk 链*/
@@ -445,11 +498,13 @@ thunk(1)(function (error, value) {
 </section>
 <section class="slide level2">
 
-<p>koa / Toa 异步小结 业务逻辑总是在 co / thunks 中运行</p>
-<p>异步业务应该是 thunk 或 generator 函数，或返回 promise 的函数</p>
-<p>但只有 thunk 或 generator 能绑定 <code>context</code> 对象，业务逻辑、中间件、模块一般就是 thunk 或 generator 函数</p>
-<p>无需关注异常，co / thunks 能捕捉异常，koa / Toa 会自动处理异常。需要主动处理的异常自行 try catch 即可</p>
-<p>推荐Toa，提供仅需的参数即可，完全控制模块访问权限，更安全</p>
+<p>koa / Toa 异步小结 + 业务逻辑总是在 co / thunks 中运行</p>
+<ul>
+<li><p>异步业务应该是 thunk 或 generator 函数，或返回 promise 的函数</p></li>
+<li><p>但只有 thunk 或 generator 能绑定 <code>context</code> 对象，业务逻辑、中间件、模块一般就是 thunk 或 generator 函数</p></li>
+<li><p>无需关注异常，co / thunks 能捕捉异常，koa / Toa 会自动处理异常。需要主动处理的异常自行 try catch 即可</p></li>
+<li><p>推荐Toa，提供仅需的参数即可，完全控制模块访问权限，更安全</p></li>
+</ul>
 </section>
     </div>
   </div>
