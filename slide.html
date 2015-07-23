@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <title></title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="reveal.js/css/reveal.css"/>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="reveal.js/css/theme/black.css" id="theme">
+  <!-- If the query includes 'print-pdf', include the PDF print sheet -->
+  <script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = 'reveal.js/css/print/pdf.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+  </script>
+  <!--[if lt IE 9]>
+  <script src="reveal.js/lib/js/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+
+<section class="slide level2">
+
+<!-- #shenjs -->
+</section>
+<section id="database-everywhere" class="slide level2">
+<h1>Database Everywhere</h1>
+<!-- 哪里都是数据库 -->
+<p>a Reactive Data Architecture for JavaScript Frontends</p>
+<p>尤雨溪</p>
+</section>
+<section class="slide level2">
+
+<h3 id="构建web-app的难点">构建Web App的难点</h3>
+<p>同步状态</p>
+<p>it is hard to keep state in sync in a modern web app</p>
+<p>因为你得维护三个状态</p>
+</section>
+<section class="slide level2">
+
+<p>UI State</p>
+<p>Client Data State</p>
+<p>Server Data State</p>
+</section>
+<section class="slide level2">
+
+<p>我们可以用Angular，React，Vue来更新UI state</p>
+<p>但是server talk to client有很多问题，RESTful接口请求</p>
+<!--
+写出很多数据请求这类命令式代码，比如增删改查这类操作，这样会导致很难处理optimisitc updates
+Problems with the
+client-model-over-REST abstraction
+!!TODO翻译
+Pull-centric design leads to imperative code
+Trouble with non-conventional APIs
+Difficulty managing optimistic updates
+我们能做什么呢
+What can we do?
+直接让UI和数据库通信
+Let the UI talk to the database!
+ -->
+</section>
+<section class="slide level2">
+
+<h3 id="使用ddp来使得ui-state与server-data-state直接通信">使用DDP来使得UI State与Server Data State直接通信</h3>
+<p>Distributed Data Protocol <!-- 分布式数据协议，这个搜索了wiki貌似是作者自个发明的词，首次出现在框架METEOR，接下来就是作者的安利时间 --></p>
+<p>&quot;REST for websockets&quot;</p>
+<p>METEOR的出现可以解决这个问题 <!-- 作者框架，有一个团队在维护开发，流星--></p>
+</section>
+<section class="slide level2">
+
+<p>内置Tracker <!--
+全栈实时框架，trakcer
+ Fullstack Reativity --></p>
+<pre><code>var light = new ReactiveVar(&#39;green&#39;);
+
+Tracker.autorun(function() {
+  console.log(&#39;The light is&#39;, light.get());
+});
+
+light.set(&#39;amber&#39;);
+light.set(&#39;red&#39;);
+
+// Result:
+
+&gt; &#39;The light is green&#39;
+&gt; &#39;The light is amber&#39;
+&gt; &#39;The light is red&#39;</code></pre>
+</section>
+<section class="slide level2">
+
+<p>内置Minimongo</p>
+<!-- 一种同构映射数据库驱动，同步client data state & server data state
+为了大家更好的理解，我把后面的一张图放到前面来
+这里Minimongo作为客户端数据缓存，通过websocket来通信，这里
+可以看到就是Minimongo做的事情就是从服务器拉取客户端数据，客户端只要按照配置好的代码（之后会讲怎么写），
+就可以直接从这里拉取缓存，不需要写什么请求之类，因为组件已经封装了，由于基于websocket，也支持推送
+这个
+ -->
+<figure>
+<img src="https://s3.amazonaws.com/media-p.slid.es/uploads/48587/images/1561797/optimistic-ui.png" alt="" />
+</figure>
+<p>Isomorphic Database Driver</p>
+</section>
+<section class="slide level2">
+
+<p>UI State</p>
+<p>Minimongo</p>
+<p>Client Data State &amp; Server Data State</p>
+</section>
+<section class="slide level2">
+
+<!-- 前端页面这样写，这里的js框架是vue -->
+<pre><code>&lt;ul&gt;
+  {{#each tasks}}
+    &lt;li&gt;{{text}}&lt;/li&gt;
+  {{/each}}
+&lt;/ul&gt;
+
+Tasks = new Mongo.Collection(&quot;tasks&quot;);
+if (Meteor.isClient) {
+  Template.body.helpers({
+    // reactive helper function
+    // just return what you need
+    tasks: function () {
+      return Tasks.find({});
+    }
+  });
+}</code></pre>
+</section>
+<section class="slide level2">
+
+<!-- 服务端这样写，这里的后端框架就是METEOR -->
+<pre><code>// define a data updating method on server
+Meteor.methods({
+  addTask: function (text) {
+    // Make sure the user is logged in before inserting a task
+    if (! Meteor.userId()) {
+      throw new Meteor.Error(&quot;not-authorized&quot;);
+    }
+    Tasks.insert({
+      text: text,
+      createdAt: new Date(),
+      owner: Meteor.userId(),
+      username: Meteor.user().username
+    });
+  }
+});
+// calling it from client, as easy as:
+Meteor.call(&quot;addTask&quot;, text);</code></pre>
+</section>
+<section class="slide level2">
+
+<p>Optimistic UI updates</p>
+<figure>
+<img src="https://s3.amazonaws.com/media-p.slid.es/uploads/48587/images/1561797/optimistic-ui.png" alt="" />
+</figure>
+<p>Component-level Subscription <!-- 使用组件级的发布订阅模式 --></p>
+<pre><code>Template.notifications.onCreated(function () {
+  // Use this.subscribe inside onCreated callback
+  this.subscribe(&quot;notifications&quot;)
+})
+
+&lt;template name=&quot;notifications&quot;&gt;
+  {{#if Template.subscriptionsReady}}
+    &lt;!-- This is displayed when all data is ready. --&gt;
+    {{#each notifications}}
+      {{&gt; notification}}
+    {{/each}}
+  {{else}}
+    Loading...
+  {{/if}}
+&lt;/template&gt;</code></pre>
+</section>
+<section class="slide level2">
+
+<p>可以兼容其他前端框架</p>
+<p>React Angular</p>
+<p><code>meteor add urigo:angular</code></p>
+<p><code>meteor add urigo:angular</code></p>
+</section>
+<section class="slide level2">
+
+<pre><code>&lt;ul ng-repeat=&quot;task in tasks&quot;&gt;
+  &lt;li&gt;{{task.text}}&lt;/li&gt;
+&lt;/ul&gt;
+
+angular.module(&quot;simple-todos&quot;, [&#39;angular-meteor&#39;]);
+
+angular.module(&quot;simple-todos&quot;)
+  .controller(&quot;TodosListCtrl&quot;, [&#39;$scope&#39;,
+    function($scope){
+      $scope.tasks = [...];
+    }
+  ]);</code></pre>
+</section>
+<section id="七牛前端测试实践" class="slide level2">
+<h1>七牛前端测试实践</h1>
+<p>马逸清</p>
+</section>
+<section class="slide level2">
+
+<h3 id="测试的好处">测试的好处</h3>
+<p>有利于重构，代码维护 <!-- 最初，七牛的Web开发并没有写测试，在开发的过程中常遇到代码稍作修改便会产生Bug的情况。
+而在做一些新功能开发时又很难察觉到它会对旧功能产生影响，到上报之后才发现有问题。
+另外，代码放久了，也不敢重构。因此，七牛开始考虑做前端测试。 --></p>
+</section>
+<section class="slide level2">
+
+<h3 id="早期尝试">早期尝试</h3>
+<ul>
+<li>模拟浏览器操作自动化 <img src="http://blog.qiniu.com/wp-content/uploads/2015/07/110.png" alt="" /></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<ul>
+<li>测试基础函数，但是对DOM有依赖的不好测试</li>
+<li>使用angular之后隔离DOM，对测试友好，集中测试数据逻辑部分</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<p>使用Angular之后，测试分为三部分</p>
+<!-- 七牛新的项目选择了 AngularJS，AngularJS对测试很友好，
+不允许在 Controller 里操作 DOM和依赖注入都让测试工作更加方便。
+换了AngularJS之后，测试的部分主要分为三类：
+一是Utils，包括一些格式化的函数、验证的函数；
+二是 Service 里的 Model 状态；
+三是 View 状态，这些和具体展现以及业务逻辑都有关，是比较复杂的部分。 -->
+<ol type="1">
+<li>Utils，工具函数</li>
+<li>Service里边的Model状态</li>
+<li>View，一般不测试</li>
+</ol>
+<!-- 数据update依赖API服务，使用Angular Mock模块屏蔽http请求并验证发出的请求及参数
+Controller的测试，主要测一些外围的函数和变量的状态 -->
+<ul>
+<li>依赖不好处理的情况，使用mock module或者stub处理依赖</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<p>Stub 适合处理仅关注返回值的依赖</p>
+<p>Angular.mock 关注依赖的行为验证，如无返回的依赖，</p>
+<p>mock，在测试领域，通常伪造被调用方来测试上层代码的健壮性，比如伪造网络异常，权限异常，文件系统异常</p>
+<!-- Mock除了关注外部依赖的返回值外，还关注外部调用的值。因此，在存／写一些状态的时候，没有返回值就不知道存／写是否成功，只能测试是否调用到了外部依赖的某个方法，传进去的参数是否是预期的。使用Mock的方式，最开始调用时要验证某个Mock对象的某个行为，最后再由Mock对象去验证它的行为是否正确。
+
+Mock Data处理的小问题，硬编码了Mock数据，难以维护
+
+使用了Karma-fixture插件，所以这里会先构造一些Mock数据，以Json文件的形式放在Mock目录下，在测试代码里面便可以把这些Mock数据加载进来直接使用。 -->
+</section>
+<section class="slide level2">
+
+<h3 id="目前用到的工具karmaphantomjs">目前用到的工具：Karma＋PhantomJS</h3>
+<p>测试工具主要使用Karma，而脚本运行的浏览器环境选择PhantomJS <!-- 可以直接在命令行里看到结果，不会每次运行测试时弹出界面。 --></p>
+<p>测试框架官方推荐Jasmine（包括Stub、Spy的功能）</p>
+</section>
+<section class="slide level2">
+
+<h3 id="前端测试带来的益处">前端测试带来的益处</h3>
+<p>写测试会考虑业务逻辑的边际条件是什么，这样就能提前找到开发时不太容易找到的Bug。</p>
+<p>重构代码更为轻松</p>
+<p>写业务代码的时候，理解会更深刻。帮助你找到更合理的代码结构。</p>
+</section>
+<section class="slide level2">
+
+<h3 id="关于前端测试的建议">关于前端测试的建议</h3>
+<p>有选择性的写测试。</p>
+<p>首先，测试比较重要的部分 <!-- 评估出错的风险。比如数据统计、计费等和用户密切相关的内容。 --></p>
+<p>其次，是测试比较稳定的部分 <!-- 即跟业务不相关的部分函数。估出错的风险 --></p>
+<p>再次，是测试依赖比较少的部分 <!-- ，这里只需要关注它整个逻辑本身。 --></p>
+<p>对于大型软件项目，合适的测试方案能够大大减少今后的维护成本，从长远来看，写测试所花的时间是非常值得的。</p>
+</section>
+<section id="调优利器node-profiler-朴灵" class="slide level2">
+<h1>调优利器：node profiler, 朴灵</h1>
+<h3 id="什么是node-profiler">什么是Node Profiler</h3>
+<ul>
+<li>来自阿里云的alinode团队的性能调优工具</li>
+<li>基于Node进行开发，hack了部分V8代码</li>
+<li>完全兼容Node，集成改进的inspector工具</li>
+</ul>
+<p>常见调优工具的问题</p>
+<p>很容易知道哪些代码慢，但较少知道原因。</p>
+<p>Node Profiler的目标是不仅要知道哪些代码，还要知 道为什么，以及更多。</p>
+<h3 id="node-profiler的工作原理">Node Profiler的工作原理</h3>
+<p>V8是一个JavaScript语言的执⾏行引擎</p>
+<ul>
+<li>V8是JIT的方式执行JavaScript代码，即：将JavaScript直接编译为机器码，然后执⾏行</li>
+<li>V8对JavaScript的处理是以函数为单位进⾏行的，也就是说一个函数的某段代码造成无法优化，会导致整个函数处于未优化的状态。所以即使某些Bailout情况无法避开，但可以确保它们处于一个极小的函数中，以避免整个函数无法优化。</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<p>带有try/catch语句的函数无法被V8优化。</p>
+<p>带有try/finally语句的函数无法被V8优化。</p>
+<p>带有with语句的函数无法被V8优化。</p>
+<p>无法复用隐藏类</p>
+<p>Fast Property Access (快速的属性访问)</p>
+<p>为了减少访问JS属性的时间，V8没有采用动态查询的方式，V8会在背后动态的创建隐藏类，在V8中，当对象的属性改变时，对象会更改隐藏类的指向。</p>
+</section>
+<section class="slide level2">
+
+<p>一个普通编译器：FullCompiler</p>
+<ul>
+<li>一个优化编译器：Optimizing Compiler</li>
+<li><p>运⾏行时优化</p></li>
+<li>DONT_OPTIMIZE_NODE</li>
+<li>Bailout</li>
+<li><p>deoptimization(逆优化)</p></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<p>Node Profiler的改进</p>
+<ul>
+<li>了解更多函数状态</li>
+<li>给出更多优化建议</li>
+<li>更好的⽤用户体验</li>
+</ul>
+<h3 id="怎么使用node-profiler">怎么使用Node Profiler</h3>
+<pre><code>install node-profiler from http://alinode.aliyun.com/
+node-profiler example.js # 运⾏行起来
+wrk http://localhost:1334/ # 让代码燃
+start profiling/stop profiling # 采样
+analyse profiling result # 分析结果</code></pre>
+</section>
+<section class="slide level2">
+
+<p>优化指南</p>
+<ul>
+<li>只优化瓶颈代码，不要优化无关的</li>
+<li>Node Profiler仅对Node(V8)有效，不保证其他环境 的有效性</li>
+<li>Node Profiler仅对CPU层面有优化，系统性能跟很多 （其他）因素相关</li>
+<li>不要使用在生产环境中！！！</li>
+</ul>
+</section>
+<section id="koa-和-toa-的框架原理及开发实践" class="slide level2">
+<h1>koa 和 toa 的框架原理及开发实践</h1>
+<p>严清</p>
+</section>
+<section class="slide level2">
+
+<h3 id="框架原理">框架原理</h3>
+</section>
+<section class="slide level2">
+
+<p>express process</p>
+<ul>
+<li><p>使用middleware function，中间件</p></li>
+<li><p>处理流程简洁明了</p></li>
+<li><p>缺乏异步流程控制（异常处理）能力</p></li>
+<li><p>历史包袱重，集成功能多，可扩展性相对差</p></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<p>koa Cascading</p>
+<ul>
+<li><p>每一个中间件的逻辑分成了前处理和后处理两部分</p></li>
+<li><p>每一个中间件都可以终止，不进入后续（下游）中间件处理流程</p></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<p>koa 四大核心</p>
+<ul>
+<li><p>Application: 异步流程控制 + 级联特性 ...</p></li>
+<li><p>Context: 挂载各种对象和方法 ...</p></li>
+<li><p>Request: 定义处理 request 的语法糖 ...</p></li>
+<li><p>Response: 定义处理 response 的语法糖 .</p></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<ul>
+<li><p>砍掉业务功能逻辑，API 简洁，实用</p></li>
+<li><p>完美的异步流程控制（异常处理）来组合业务逻辑</p></li>
+</ul>
+<p>缺点</p>
+<ul>
+<li><p>级联模式处理流程复杂</p></li>
+<li><p>中间件模式context会携带上下文给第三方组件，对第三方暴露太多</p></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<p>toa <!-- 这个是作者及其团队自个写的框架， 异步基础基于thunks，后面会讲到--></p>
+<p>没有级联怎么办？</p>
+<p>后处理：context.onPreEnd</p>
+<p>终止业务流程：context.end</p>
+<h3 id="异步基础">异步基础</h3>
+<h4 id="promise">promise</h4>
+<ul>
+<li>标准接口</li>
+</ul>
+<!-- 比如我们常用什么jQuery.get.fail -->
+<ul>
+<li><p>总是返回新promise，可链式调用展平异步逻辑</p></li>
+<li><p>对内部 <code>return promise</code> 求值</p></li>
+</ul>
+</section>
+<section class="slide level2">
+
+<h4 id="thunk">thunk</h4>
+<p>thunk是高阶函数的一种--将函数作为输入或者返回值的函数，是callback的特别形式</p>
+<p>thunk是一个封装了特定任务（函数）的函数，运行该函数时任务才开始执行（惰性求值）</p>
+<pre><code>function + promise + co = thunks
+thunk(cb)(cb)(cb)(cb)(cb)(cb) /* thunk 链*/
+thunk(1)(function (error, value) {
+    should(error).be.equal(null)
+    should(value).be.equal(1)
+    return Promise.resolve(2)
+})(function (error, value) {
+    should(error).be.equal(null)
+    should(value).be.equal(2)
+    return thunk(x)
+})(function (error, value) {
+    should(error).be.equal(null)
+    should(value).be.equal(x)
+})(done)</code></pre>
+</section>
+<section class="slide level2">
+
+<h4 id="generator">generator</h4>
+<p>见co，koa使用</p>
+</section>
+<section class="slide level2">
+
+<p>koa / Toa 异步小结 业务逻辑总是在 co / thunks 中运行</p>
+<p>异步业务应该是 thunk 或 generator 函数，或返回 promise 的函数</p>
+<p>但只有 thunk 或 generator 能绑定 <code>context</code> 对象，业务逻辑、中间件、模块一般就是 thunk 或 generator 函数</p>
+<p>无需关注异常，co / thunks 能捕捉异常，koa / Toa 会自动处理异常。需要主动处理的异常自行 try catch 即可</p>
+<p>推荐Toa，提供仅需的参数即可，完全控制模块访问权限，更安全</p>
+</section>
+    </div>
+  </div>
+
+
+  <script src="reveal.js/lib/js/head.min.js"></script>
+  <script src="reveal.js/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,         // Display controls in the bottom right corner
+        progress: true,         // Display a presentation progress bar
+        history: true,          // Push each slide change to the browser history
+        center: true,                       // Vertical centering of slides
+        maxScale: 1.5,                  // Bounds for smallest/largest possible content scale
+        slideNumber: false,                // Display the page number of the current slide
+        theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+//          { src: 'reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; }, }
+//          { src: 'reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+]});
+    </script>
+    </body>
+</html>
